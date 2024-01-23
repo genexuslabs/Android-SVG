@@ -4176,9 +4176,19 @@ class SVGAndroidRenderer
       return p;
    }
 
+   private void initializeDefaultRectProperties(SVG.Rect rect) {
+      if (rect.width == null) {
+         rect.width = new Length(0);
+      }
+      if (rect.height == null) {
+         rect.height = new Length(0);
+      }
+   }
 
    private Path  makePathAndBoundingBox(Rect obj)
    {
+      initializeDefaultRectProperties(obj);
+
       float x, y, w, h, rx, ry;
 
       if (obj.rx == null && obj.ry == null) {
