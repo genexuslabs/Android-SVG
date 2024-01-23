@@ -81,8 +81,7 @@ afterEvaluate {
 
             maven {
                 name "Local"
-                // url = "${System.env.GENEXUS_REPO}"
-                url = "file:///home/airazabal-genexus/GenexusRepo/"
+                url = "${System.env.GENEXUS_REPO}"
             }
         }
     }
