@@ -1,175 +1,89 @@
-// Handles the upload to Sonatype.
-
-// This build file requires a recent Gradle (4.9+ ?)
-
-//apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
+apply from: file('publisher-helper.gradle')
 
+ext.isReleaseVersion = !project.version.endsWith("-SNAPSHOT")
+project.group = "com.genexus.android"
+project.version = "1.5.0"
 
-version = '1.4'
-//version = '1.3-SNAPSHOT'
-
-def  libraryName = 'AndroidSVG'
-def  libraryDescription = 'SVG rendering library for Android.'
-
-def  artifactIdAAR = 'androidsvg-aar'
-def  artifactIdJAR = 'androidsvg'
-def  group = 'com.caverock'
-
-def  developerId = 'BigBadaboom'
-def  developerName = 'Paul LeBeau'
-def  developerEmail = 'androidsvgfeedback@gmail.com'
-
-def  siteUrl = 'https://github.com/BigBadaboom/androidsvg'
-def  gitUrl = 'https://github.com/BigBadaboom/androidsvg.git'
-
-def  licenseName = 'The Apache Software License, Version 2.0'
-def  licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-
-def  releaseRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-def  snapshotRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-
-
-publishing {
-    repositories {
-        maven {
-            url = version.endsWith('SNAPSHOT') ? snapshotRepoUrl : releaseRepoUrl
-            credentials {
-                username project.sonatypeUsername
-                password project.sonatypePassword
+afterEvaluate {
+    publishing {
+        publications {
+            debug(MavenPublication) {
+                from components.debug
             }
-        }
-    }
+            release(MavenPublication) {
+                from components.release
+                artifact(androidSourcesJar)
+                artifact(androidJavadocsJar)
 
-    publications {
-
-        mavenAAR(MavenPublication) {
-            artifactId = artifactIdAAR
-            groupId = group
-
-            artifact("${buildDir}/outputs/aar/androidsvg-release.aar") {
-                // wrap in a closure because this task isn't defined 'till
-                // the android plugin finishes
-                builtBy { tasks["assembleRelease"] }
-            }
-            afterEvaluate {
-               artifact sourcesJar
-               artifact javadocJar
-            }
-
-            pom {
-                packaging = 'aar'
-
-                name = libraryName
-                description = libraryDescription
-                url = siteUrl
-
-                licenses {
-                    license {
-                        name = licenseName
-                        url = licenseUrl
-                        distribution = 'repo'
-                    }
+                signing {
+                    required { hasProperty("release") && !gradle.taskGraph.hasTask("publishReleasePublicationToLocalRepository") }
+                    def signingKey = System.getenv("GPG_KEY")
+                    def signingPassword = System.getenv("GPG_PASSPHRASE")
+                    useInMemoryPgpKeys(signingKey, signingPassword)
+                    sign publishing.publications.release
                 }
-                developers {
-                    developer {
-                        id = developerId
-                        name = developerName
-                        email = developerEmail
+
+                pom {
+                    name = "${project.group}:${artifactId}"
+                    description = "AndroidX RoundedImageView library"
+                    url = "https://github.com/genexuslabs/RoundedImageView"
+                    organization {
+                        name = "GeneXus S.A."
+                        url = "https://genexus.com"
                     }
-                }
-                scm {
-                    connection = gitUrl
-                    developerConnection = gitUrl
-                    url = siteUrl
+                    licenses {
+                        license {
+                            name = "The Apache Software License, Version 2.0"
+                            url = "https://www.apache.org/licenses/LICENSE-2.0"
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = "Juan Pablo González"
+                            email = "jpgonzalez@genexus.com"
+                            organization = "GeneXus S.A."
+                            organizationUrl = "https://genexus.com"
+                        }
+                    }
+                    scm {
+                        connection = "scm:git:git://github.com/genexuslabs/RoundedImageView.git"
+                        developerConnection = "scm:git:git@github.com:genexuslabs/RoundedImageView.git"
+                        url = "https://github.com/genexuslabs/RoundedImageView"
+                    }
                 }
             }
         }
 
-        mavenJAR(MavenPublication) {
-            artifactId = artifactIdJAR
-            groupId = group
-
-            afterEvaluate {
-               artifact libraryJar
-               artifact sourcesJar
-               artifact javadocJar
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = "https://maven.pkg.github.com/genexuslabs/RoundedImageView"
+                credentials {
+                    username = System.getenv("USERNAME")
+                    password = System.getenv("PASSWORD")
+                }
             }
 
-            pom {
-                packaging = 'jar'
+            maven {
+                name = "OSSRH"
+                if (!isReleaseVersion) {
+                    url "https://s01.oss.sonatype.org/content/repositories/snapshots"
+                } else {
+                    url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
+                }
+                credentials {
+                    username = System.getenv("USERNAME")
+                    password = System.getenv("PASSWORD")
+                }
+            }
 
-                name = libraryName
-                description = libraryDescription
-                url = siteUrl
-
-                licenses {
-                    license {
-                        name = licenseName
-                        url = licenseUrl
-                        distribution = 'repo'
-                    }
-                }
-                developers {
-                    developer {
-                        id = developerId
-                        name = developerName
-                        email = developerEmail
-                    }
-                }
-                scm {
-                    connection = gitUrl
-                    developerConnection = gitUrl
-                    url = siteUrl
-                }
+            maven {
+                name "Local"
+                // url = "${System.env.GENEXUS_REPO}"
+                url = "file:///home/airazabal-genexus/GenexusRepo/"
             }
         }
     }
-}
-
-
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    destinationDir = new File("$rootProject.projectDir/doc/")
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    options {
-        links "http://docs.oracle.com/javase/7/docs/api/"
-        linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/docs/reference"
-        // Replacement stylesheet for javadocs
-        stylesheetFile = new File(projectDir, "javadoc-stylesheet.css")
-    }
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.getDestinationDir()
-}
-
-task libraryJar(type: Jar, dependsOn: 'compileReleaseJavaWithJavac') {
-    from {
-        compileReleaseJavaWithJavac.destinationDir
-    }
-
-    // Add all dependencies except for android.jar to the fat jar
-    from {
-        configurations.compile.findAll {
-            it.getName() != 'android.jar' &&
-            !it.getName().startsWith('junit')
-        }.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-
-    archiveName = "${artifactIdJAR}-${version}.jar"
-}
-
-signing {
-    sign publishing.publications.mavenAAR
-    sign publishing.publications.mavenJAR
 }
