@@ -27,8 +27,8 @@ afterEvaluate {
 
                 pom {
                     name = "${project.group}:${artifactId}"
-                    description = "AndroidX RoundedImageView library"
-                    url = "https://github.com/genexuslabs/RoundedImageView"
+                    description = "AndroidX Android SVG library"
+                    url = "https://github.com/genexuslabs/androidsvg"
                     organization {
                         name = "GeneXus S.A."
                         url = "https://genexus.com"
@@ -48,9 +48,9 @@ afterEvaluate {
                         }
                     }
                     scm {
-                        connection = "scm:git:git://github.com/genexuslabs/RoundedImageView.git"
-                        developerConnection = "scm:git:git@github.com:genexuslabs/RoundedImageView.git"
-                        url = "https://github.com/genexuslabs/RoundedImageView"
+                        connection = "scm:git:git://github.com/genexuslabs/androidsvg.git"
+                        developerConnection = "scm:git:git@github.com:genexuslabs/androidsvg.git"
+                        url = "https://github.com/genexuslabs/androidsvg"
                     }
                 }
             }
@@ -59,7 +59,7 @@ afterEvaluate {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = "https://maven.pkg.github.com/genexuslabs/RoundedImageView"
+                url = "https://maven.pkg.github.com/genexuslabs/androidsvg"
                 credentials {
                     username = System.getenv("USERNAME")
                     password = System.getenv("PASSWORD")
